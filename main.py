@@ -60,10 +60,9 @@ def validate(val_loader, model, criterion):
 		    target = target.cuda()
 		    predicted_label = model.forward(input).cuda()
 		    loss = criterion(predicted_label, target).cuda()
-		    total += 128
-		    accuracies += torch.sum(target == torch.argmax(predicted_label, dim=1))
+		    total += 128 # todo: change this to dataloader attribute batch_size
 		    total_loss += loss
-	    return total_loss, accuracies/total
+	    return total_loss
 
 def save_checkpoint(state, best_one, filename='rotationnetcheckpoint.pth.tar', filename2='rotationnetmodelbest.pth.tar'):
 	torch.save(state, filename)
@@ -90,21 +89,20 @@ def main():
 	total_loss = train(train_loader, model, criterion)
 	print("Total loss" + total_loss)
 
-	val_dataset = './validation/' + '*' #how will you get your dataset
-	val_loader = CIFAR(val_dataset) # how will you use pytorch's function to build a dataloader
+
+	# todo: val loading
+	#val_dataset = './validation/' + '*' #how will you get your dataset
+	#val_loader = CIFAR(val_dataset) # how will you use pytorch's function to build a dataloader
 	
-	#
-	# for epoch in range(n_epochs):
-	# 	total_loss = train(all_batches, model, criterion, optimizer, epoch)
-	# 	print("Epoch {0}: {1}".format(epoch, total_loss))
-	# 	validation_loss, accuracy = validate(val_batches, model, criterion)
-	# 	print("Test Loss {0}".format(validation_loss))
-	# 	print("Test Accuracy {0}".format(accuracy))
-	# 	if accuracy < current_best_validation_loss:
-	# 		save_checkpoint(model.state_dict(), True)
-	# 		current_best_validation_loss = accuracy
-	# 	else:
-	# 		save_checkpoint(model.state_dict(), False)
+	
+	for epoch in range(n_epochs):
+		total_loss = train(all_batches, model, criterion, optimizer, epoch)
+		print("Epoch {0}: {1}".format(epoch, total_loss))
+		validation_loss = validate(val_batches, model, criterion)
+		print("Test Loss {0}".format(validation_loss))
+		if validation_loss < current_best_validation_loss:
+			save_checkpoint(model.state_dict(), True)
+			current_best_validation_loss = validation_loss
 
 
 if __name__ == "__main__":
