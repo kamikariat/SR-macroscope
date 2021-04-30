@@ -5,7 +5,7 @@ from torchvision import transforms
 from torch.utils.data.dataset import Dataset  # For custom datasets
 # from data_pytorch import Data
 
-from resnet import ResNet
+from resnet import MDSR
 from data import CIFAR
 
 import numpy as np
@@ -15,7 +15,7 @@ import shutil
 import yaml
 import argparse
 
-from torchsummary import summary
+# from torchsummary import summary
 
 
 
@@ -32,18 +32,14 @@ args = parser.parse_args()
 config = yaml.load(open(args.config, 'r'), Loader=yaml.FullLoader)
 
 
-def train(train_loader, model, criterion, optimizer, epoch):
+def train(train_loader, model, criterion, optimizer):
 	model.train()
 	total_loss = 0
-	#print("hi")
 	for i, (input, target) in enumerate(train_loader):
-		#print(input.shape)
-		#print(target.shape)
 		optimizer.zero_grad()
-		#print(input.shape)
 		input = input.cuda()
 		predicted_label = model.forward(input).cuda()
-		target = target.cuda()
+		# target = target.cuda()
 		loss = criterion(predicted_label, target).cuda()
 		loss.backward()
 		optimizer.step()
@@ -77,81 +73,38 @@ def save_checkpoint(state, best_one, filename='rotationnetcheckpoint.pth.tar', f
 
 def main():
 	print(torch.cuda.device_count(), "gpus available")
-	
-	# print(summary(model, (3, 32, 32)))
-	print("HEYO")
 
 	n_epochs = config["num_epochs"]
-	print(n_epochs)
-	model = ResNet(0,0,0).cuda() #make the model with your paramters
+	print("Number of epochs: " + n_epochs)
+	model = MDSR()
     
-	criterion = nn.CrossEntropyLoss() #what is your loss function
-    
-	optimizer = torch.optim.Adam(model.parameters(), lr=0.0001) #which optimizer are you using
+	criterion = nn.L1Loss()
+	optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 
-	train_dataset = './images/' + '*'#how will you get your dataset
-	train_loader = CIFAR(train_dataset) # how will you use pytorch's function to build a dataloader
-	
-	# next --> (4x3x32x32, 4)
-	"""
-	image_stack = []
-	label_stack = []
-	for i in range(32):
-		temp = next(iter(data_loader))
-		image_stack.append(temp[0])
-		label_stack.append(temp[1])
-	img = np.concatenate(image_stack, axis=0)
-	lb = np.concatenate(label_stack, axis=0)
-	batch_1 (img, lb)
-	"""
-	print("hi")
-	all_batches = []
-	d_iter = iter(train_loader)
-	for i in range(45000//32):
-		image_stack = []
-		label_stack = []
-		for i in range(32):
-			temp = next(d_iter)
-			image_stack.append(temp[0])
-			label_stack.append(temp[1])
-		img = torch.cat(image_stack, axis=0)
-		lb = torch.cat(label_stack, axis=0)
-		all_batches.append((img, lb))
+	train_HR_dataset = './datasets_temp/HR/'
+	train_LR_dataset = './datasets_temp/LR/'
+	dataset = CIFAR(train_HR_dataset, train_LR_dataset)
+	train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(dataset, [int(len(dataset) * .75), int(len(dataset) * .01), int(len(dataset) * .24)])
 
-	print("concat done")
-
+	train_loader = torch.utils.data.DataLoader(train_dataset, 16)
+	total_loss = train(train_loader, model, criterion)
+	print("Total loss" + total_loss)
 
 	val_dataset = './validation/' + '*' #how will you get your dataset
 	val_loader = CIFAR(val_dataset) # how will you use pytorch's function to build a dataloader
 	
-	val_batches = []
-	d_iter = iter(val_loader)
-	for i in range(4900//32):
-		image_stack = []
-		label_stack = []
-		for i in range(32):
-			temp = next(d_iter)
-			image_stack.append(temp[0])
-			label_stack.append(temp[1])
-		img = torch.cat(image_stack, axis=0)
-		lb = torch.cat(label_stack, axis=0)
-		val_batches.append((img, lb))
-
-	current_best_validation_loss = float("Infinity")
-
-	print(len(train_loader))
-
-	for epoch in range(n_epochs):
-		total_loss = train(all_batches, model, criterion, optimizer, epoch)
-		print("Epoch {0}: {1}".format(epoch, total_loss))
-		validation_loss, accuracy = validate(val_batches, model, criterion)
-		print("Test Loss {0}".format(validation_loss))
-		print("Test Accuracy {0}".format(accuracy))
-		if accuracy < current_best_validation_loss:
-			save_checkpoint(model.state_dict(), True)
-			current_best_validation_loss = accuracy
-		else:
-			save_checkpoint(model.state_dict(), False)
+	#
+	# for epoch in range(n_epochs):
+	# 	total_loss = train(all_batches, model, criterion, optimizer, epoch)
+	# 	print("Epoch {0}: {1}".format(epoch, total_loss))
+	# 	validation_loss, accuracy = validate(val_batches, model, criterion)
+	# 	print("Test Loss {0}".format(validation_loss))
+	# 	print("Test Accuracy {0}".format(accuracy))
+	# 	if accuracy < current_best_validation_loss:
+	# 		save_checkpoint(model.state_dict(), True)
+	# 		current_best_validation_loss = accuracy
+	# 	else:
+	# 		save_checkpoint(model.state_dict(), False)
 
 
 if __name__ == "__main__":
