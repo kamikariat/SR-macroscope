@@ -1,53 +1,73 @@
 
 import torch.nn as nn
+import torch
 
-#add imports as necessary
+from torchvision.models.resnet import BasicBlock
 
-class ResNet(nn.Module):
+# 5x5 resnet block
+class NoNormRes5(BasicBlock):
+    def __init__(
+    self,
+    inplanes: int,
+    planes: int,
+    stride: int = 1,
+    downsample: Optional[nn.Module] = None,
+    groups: int = 1,
+    base_width: int = 64,
+    dilation: int = 2,
+    norm_layer: Optional[Callable[..., nn.Module]] = nn.Identity()
+        ) -> None:
+        super(NoNormRes5, self).__init__()
+        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=5, stride=stride,
+            padding=dilation, groups=groups, bias=False, dilation=dilation)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=5, stride=stride,
+            padding=dilation, groups=groups, bias=False, dilation=dilation)
+        # self.bn1 = nn.Identity()
+        # self.bn2 = nn.Identity()
 
-    def __init__(self, block, layers, num_classes=1000):
-        super(ResNet, self).__init__()
-        #populate the layers with your custom functions or pytorch
-        #functions.
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=(7,7), stride=2, padding=3)
-        #i think there is padding^?
-        self.bn1 = nn.BatchNorm2d(64)
-        self.relu = nn.ReLU() 
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self.new_block(64,64,1)
-        self.layer2 = self.new_block(64,128,2)
-        self.layer3 = self.new_block(128,256,2)
-        self.layer4 = self.new_block(256,512,2)
-        self.avgpool = nn.AdaptiveAvgPool2d((1,1))
-        self.fc = nn.Linear(512, 4)
-        # self.softMax = nn.Softmax2d()
+
+class MDSR(nn.Module):
+
+    def __init__(self, block, layers, f_channels = 64, hr_res = (1024,1024), multiplier = 2):
+        # self.hr_res = hr_res
+        # self.lr_res = tuple(dim / multiplier for dim in hr_res)
+
+        # 3x3 convolution at beginning
+        self.prior_conv_0 = nn.Conv2d(3, f_channels, 3, padding = 1)
+
+        # 2 5x5 convolutions specific to the multiplier
+        self.prior_conv_1 = NoNormRes5(f_channels, f_channels)
+        self.prior_conv_2 = NoNormRes5(f_channels, f_channels)
+
+        # 16 or 80 3x3 resnet-relu blocks
+        self.shared_blocks = []
+        for _ in range(80):
+            self.shared_blocks.append(BasicBlock(f_channels, f_channels, norm_layer = nn.Identity()))
+
+        # sub-pixel convolution for upscaling
+        self.upscale_pre = nn.Conv2d(f_channels, f_channels, 3 * multiplier * multiplier , padding = 1)
+        self.upscale = nn.PixelShuffle(multiplier)
+
+        # 2 3x3 resnet-relu blocks for result
+        self.out_pre_0 = BasicBlock(3, 3, norm_layer = nn.Identity(), padding = 1)
+        self.out_pre_1 = BasicBlock(3, 3, norm_layer = nn.Identity(), padding = 1)
 
     def forward(self, x):
-        #TODO: implement the forward function for resnet,
-        #use all the functions you've made
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        # print("After relu:" + str(x.shape))
-        x = self.maxpool(x)
-        # print("After maxpool:" + str(x.shape))
-        x = self.layer1(x)
-        # print("Layer 1 output:" + str(x.shape))
-        x = self.layer2(x)
-        # print("Layer 2 output:" + str(x.shape))
-        x = self.layer3(x)
-        # print("Layer 3 output:" + str(x.shape))
-        x = self.layer4(x)
-        # print("Layer 4 output:" + str(x.shape))
-        x = self.avgpool(x)
-        # print("After Average Pooling:" + str(x.shape))
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
-        # print("After FC" + str(x.shape))
-        # x = self.softMax(x)
+        x = self.prior_conv_0(x)
+        x = self.prior_conv_1(x)
+        x = self.prior_conv_2(x)
+
+        for shared_block in self.shared_blocks:
+            x = shared_block(x)
+
+        x = self.upscale_pre(x)
+        x = self.upscale(x)
+        x = self.out_pre_0(x)
+        x = self.out_pre_1(x)
+
         return x
 
-    def new_block(self, in_planes, out_planes, stride):
-        layers = [nn.Conv2d(in_planes, out_planes, (3,3), stride, padding=1), nn.BatchNorm2d(out_planes), nn.ReLU(), nn.Conv2d(out_planes, out_planes, (3,3), stride=1, padding=1), nn.BatchNorm2d(out_planes), nn.ReLU()]
-        #TODO: make a convolution with the above params
-        return nn.Sequential(*layers)
+    # def new_block(self, in_planes, out_planes, stride):
+    #     layers = [nn.Conv2d(in_planes, out_planes, (3,3), stride, padding=1), nn.BatchNorm2d(out_planes), nn.ReLU(), nn.Conv2d(out_planes, out_planes, (3,3), stride=1, padding=1), nn.BatchNorm2d(out_planes), nn.ReLU()]
+    #     #TODO: make a convolution with the above params
+    #     return nn.Sequential(*layers)
