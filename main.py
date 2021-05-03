@@ -34,7 +34,7 @@ config = yaml.load(open(args.config, 'r'), Loader=yaml.FullLoader)
 def train(train_loader, model, criterion, optimizer):
     model.train()
     total_loss = 0
-    for (input, target) in train_loader:
+    for (input, target) in iter(train_loader):
         optimizer.zero_grad()
         input = input.cuda()
         predicted_label = model.forward(input).cuda()
@@ -52,7 +52,7 @@ def validate(val_loader, model, criterion):
         total_loss = 0
         total = 0
         accuracies = 0
-        for (input, target) in val_loader:
+        for (input, target) in iter(val_loader):
             # print(input.shape)
             # print(target.shape)
             input = input.cuda()
