@@ -2,6 +2,8 @@
 import torch.nn as nn
 import torch
 
+from typing import Optional
+from typing import Callable
 from torchvision.models.resnet import BasicBlock
 
 # 5x5 resnet block
@@ -17,7 +19,7 @@ class NoNormRes5(BasicBlock):
     dilation: int = 2,
     norm_layer: Optional[Callable[..., nn.Module]] = nn.Identity()
         ) -> None:
-        super(NoNormRes5, self).__init__()
+        super(NoNormRes5, self).__init__(inplanes, planes)
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=5, stride=stride,
             padding=dilation, groups=groups, bias=False, dilation=dilation)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=5, stride=stride,
@@ -28,9 +30,11 @@ class NoNormRes5(BasicBlock):
 
 class MDSR(nn.Module):
 
-    def __init__(self, block, layers, f_channels = 64, hr_res = (1024,1024), multiplier = 2):
+    def __init__(self, f_channels = 64, hr_res = (1024,1024), multiplier = 2):
         # self.hr_res = hr_res
         # self.lr_res = tuple(dim / multiplier for dim in hr_res)
+
+        super(MDSR, self).__init__()
 
         # 3x3 convolution at beginning
         self.prior_conv_0 = nn.Conv2d(3, f_channels, 3, padding = 1)
@@ -49,8 +53,8 @@ class MDSR(nn.Module):
         self.upscale = nn.PixelShuffle(multiplier)
 
         # 2 3x3 resnet-relu blocks for result
-        self.out_pre_0 = BasicBlock(3, 3, norm_layer = nn.Identity(), padding = 1)
-        self.out_pre_1 = BasicBlock(3, 3, norm_layer = nn.Identity(), padding = 1)
+        self.out_pre_0 = BasicBlock(3, 3, norm_layer = nn.Identity(), dilation = 1)
+        self.out_pre_1 = BasicBlock(3, 3, norm_layer = nn.Identity(), dilation = 1)
 
     def forward(self, x):
         x = self.prior_conv_0(x)

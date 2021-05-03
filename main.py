@@ -6,7 +6,7 @@ from torch.utils.data.dataset import Dataset  # For custom datasets
 # from data_pytorch import Data
 
 from resnet import MDSR
-from data import CIFAR
+from data import DIV2K
 
 import numpy as np
 
@@ -22,10 +22,10 @@ import argparse
 parser = argparse.ArgumentParser(
     description='Configuration details for training/testing rotation net')
 parser.add_argument('--config', type=str, required=True)
-parser.add_argument('--train', action='store_true')
-parser.add_argument('--data_dir', type=str, required=True)
-parser.add_argument('--image', type=str)
-parser.add_argument('--model_number', type=str, required=True)
+#parser.add_argument('--train', action='store_true')
+#parser.add_argument('--data_dir', type=str, required=True)
+#parser.add_argument('--image', type=str)
+#parser.add_argument('--model_number', type=str, required=True)
 
 args = parser.parse_args()
 
@@ -74,20 +74,21 @@ def main():
 	print(torch.cuda.device_count(), "gpus available")
 
 	n_epochs = config["num_epochs"]
-	print("Number of epochs: " + n_epochs)
+	print("Number of epochs: ", n_epochs)
 	model = MDSR()
     
 	criterion = nn.L1Loss()
 	optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 
-	train_HR_dataset = './datasets_temp/HR/'
-	train_LR_dataset = './datasets_temp/LR/'
-	dataset = CIFAR(train_HR_dataset, train_LR_dataset)
+	train_HR_dataset = './train/x1/'
+	train_LR_dataset = './train/x2/'
+	dataset = DIV2K(train_HR_dataset, train_LR_dataset)
 	train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(dataset, [int(len(dataset) * .75), int(len(dataset) * .01), int(len(dataset) * .24)])
 
 	train_loader = torch.utils.data.DataLoader(train_dataset, 16)
-	total_loss = train(train_loader, model, criterion)
-	print("Total loss" + total_loss)
+        val_loader = torch.utils.data.DataLoader(train_dataset, 1)
+	#total_loss = train(train_loader, model, criterion, optimizer)
+	#print("Total loss", total_loss)
 
 
 	# todo: val loading
@@ -96,7 +97,7 @@ def main():
 	
 	
 	for epoch in range(n_epochs):
-		total_loss = train(all_batches, model, criterion, optimizer, epoch)
+		total_loss = train(train_loader, model, criterion, optimizer)
 		print("Epoch {0}: {1}".format(epoch, total_loss))
 		validation_loss = validate(val_batches, model, criterion)
 		print("Test Loss {0}".format(validation_loss))
