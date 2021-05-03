@@ -25,7 +25,7 @@ class DIV2K(Dataset):
     Implements Dataset (torch.utils.data.dataset)
     """
 
-    def __init__(self, hr_dir, lr_dir):
+    def __init__(self, hr_dir, lr_dir, transform):
         """
         Args:
             data_dir (string): Directory with all the images
@@ -41,6 +41,8 @@ class DIV2K(Dataset):
 
         self.data_len = len(self.hr_image_list)
 
+        self.trans = transform
+
     def __getitem__(self, index):
         """
         Lazily get the item at the index.
@@ -52,7 +54,10 @@ class DIV2K(Dataset):
         LR_image = Image.open(LR_single_image_path)
         HR_image = Image.open(HR_single_image_path)
 
-        return (LR_image, HR_image)
+        LR_trans = self.trans(LR_image)
+        HR_trans = self.trans(HR_image)
+
+        return (LR_trans, HR_trans)
 
         # crop
         #LR_image_cropped = LR_image.crop((0, 0, 256, 256))
