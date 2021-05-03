@@ -52,19 +52,21 @@ class DIV2K(Dataset):
         LR_image = Image.open(LR_single_image_path)
         HR_image = Image.open(HR_single_image_path)
 
+        return (LR_image, HR_image)
+
         # crop
-        LR_image_cropped = LR_image.crop((0, 0, 256, 256))
-        HR_image_cropped = HR_image.crop((0, 0, 1024, 1024))
+        #LR_image_cropped = LR_image.crop((0, 0, 256, 256))
+        #HR_image_cropped = HR_image.crop((0, 0, 1024, 1024))
 
         # convert both into np
-        LR_image_np = np.asarray(LR_image_cropped)/255
-        HR_image_np = np.asarray(HR_image_cropped)/255
+        #LR_image_np = np.asarray(LR_image_cropped)/255
+        #HR_image_np = np.asarray(HR_image_cropped)/255
         # convert both into tensor
-        LR_image_tensor = torch.from_numpy(LR_image_np).float()
-        HR_image_tensor = torch.from_numpy(HR_image_np).float()
+        #LR_image_tensor = torch.from_numpy(LR_image_np).float()
+        #HR_image_tensor = torch.from_numpy(HR_image_np).float()
 
         # return (LR, HR)
-        return (LR_image_tensor, HR_image_tensor)
+        #return (LR_image_tensor, HR_image_tensor)
 
     def __len__(self):
         return self.data_len

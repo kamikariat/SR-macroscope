@@ -84,11 +84,17 @@ def main():
     train_HR_dataset = './test/x1/'
     train_LR_dataset = './test/x2/'
     dataset = DIV2K(train_HR_dataset, train_LR_dataset)
+
+    #from https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
+    transform = transforms.Compose([transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+
     train_dataset, valid_dataset = torch.utils.data.random_split(
         dataset, [int(len(dataset) * .95), int(len(dataset) * .05)])
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, 16)
-    val_loader = torch.utils.data.DataLoader(valid_dataset, 1)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size = 16, transform = transform)
+    val_loader = torch.utils.data.DataLoader(valid_dataset, batch_size = 1, transform = transform)
     #total_loss = train(train_loader, model, criterion, optimizer)
     #print("Total loss", total_loss)
 
