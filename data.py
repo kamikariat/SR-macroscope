@@ -25,7 +25,7 @@ class DIV2K(Dataset):
     Implements Dataset (torch.utils.data.dataset)
     """
 
-    def __init__(self, lr_dir, hr_dir):
+    def __init__(self, hr_dir, lr_dir):
         """
         Args:
             data_dir (string): Directory with all the images

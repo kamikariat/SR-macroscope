@@ -81,8 +81,8 @@ def main():
     criterion = nn.L1Loss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 
-    train_HR_dataset = './train/x1/'
-    train_LR_dataset = './train/x2/'
+    train_HR_dataset = './test/x1/'
+    train_LR_dataset = './test/x2/'
     dataset = DIV2K(train_HR_dataset, train_LR_dataset)
     train_dataset, valid_dataset = torch.utils.data.random_split(
         dataset, [int(len(dataset) * .95), int(len(dataset) * .05)])
