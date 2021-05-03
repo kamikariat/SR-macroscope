@@ -34,7 +34,7 @@ config = yaml.load(open(args.config, 'r'), Loader=yaml.FullLoader)
 def train(train_loader, model, criterion, optimizer):
     model.train()
     total_loss = 0
-    for i, (input, target) in enumerate(train_loader):
+    for (input, target) in train_loader:
         optimizer.zero_grad()
         input = input.cuda()
         predicted_label = model.forward(input).cuda()
@@ -52,7 +52,7 @@ def validate(val_loader, model, criterion):
         total_loss = 0
         total = 0
         accuracies = 0
-        for i, (input, target) in enumerate(val_loader):
+        for (input, target) in val_loader:
             # print(input.shape)
             # print(target.shape)
             input = input.cuda()
@@ -84,11 +84,11 @@ def main():
     train_HR_dataset = './train/x1/'
     train_LR_dataset = './train/x2/'
     dataset = DIV2K(train_HR_dataset, train_LR_dataset)
-    train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(
-        dataset, [int(len(dataset) * .75), int(len(dataset) * .01), int(len(dataset) * .24)])
+    train_dataset, valid_dataset = torch.utils.data.random_split(
+        dataset, [int(len(dataset) * .95), int(len(dataset) * .05)])
 
     train_loader = torch.utils.data.DataLoader(train_dataset, 16)
-    val_loader = torch.utils.data.DataLoader(train_dataset, 1)
+    val_loader = torch.utils.data.DataLoader(valid_dataset, 1)
     #total_loss = train(train_loader, model, criterion, optimizer)
     #print("Total loss", total_loss)
 
