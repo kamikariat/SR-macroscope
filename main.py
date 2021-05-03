@@ -96,10 +96,11 @@ def main():
     # val_dataset = './validation/' + '*' #how will you get your dataset
     # val_loader = CIFAR(val_dataset) # how will you use pytorch's function to build a dataloader
 
+    current_best_validation_loss = float('inf')
     for epoch in range(n_epochs):
         total_loss = train(train_loader, model, criterion, optimizer)
         print("Epoch {0}: {1}".format(epoch, total_loss))
-        validation_loss = validate(val_batches, model, criterion)
+        validation_loss = validate(val_loader, model, criterion)
         print("Test Loss {0}".format(validation_loss))
         if validation_loss < current_best_validation_loss:
             save_checkpoint(model.state_dict(), True)
