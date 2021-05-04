@@ -69,8 +69,8 @@ class MDSR(nn.Module):
         for shared_block in self.shared_blocks:
             x = shared_block(x)
 
-        x = self.upscale_pre(x)
         x = x + res_x
+        x = self.upscale_pre(x)
         x = self.upscale(x)
         x = self.out_pre_0(x)
         x = self.out_pre_1(x)
