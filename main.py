@@ -84,9 +84,9 @@ def main():
 
     #from https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
     transformLR = transforms.Compose([transforms.CenterCrop(512), transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        transforms.Normalize((255/2, 255/2, 255/2), (255/3, 255/3, 255/3))])
     transformHR = transforms.Compose([transforms.CenterCrop(1024), transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        transforms.Normalize((255/2, 255/2, 255/2), (255/3, 255/3, 255/3))])
 
     dataset = DIV2K(train_HR_dataset, train_LR_dataset, transformHR, transformLR)
     train_dataset, valid_dataset, _ = torch.utils.data.random_split(
