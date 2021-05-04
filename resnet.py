@@ -18,14 +18,14 @@ class NoNormRes5(BasicBlock):
         downsample: Optional[nn.Module] = None,
         groups: int = 1,
         base_width: int = 64,
-        dilation: int = 2,
+        dilation: int = 1,
         norm_layer: Optional[Callable[..., nn.Module]] = nn.Identity()
     ) -> None:
         super(NoNormRes5, self).__init__(inplanes, planes)
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=5, stride=stride,
-                               padding=dilation, groups=groups, bias=False, dilation=dilation)
+                               padding=2, groups=groups, bias=False, dilation=dilation)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=5, stride=stride,
-                               padding=dilation, groups=groups, bias=False, dilation=dilation)
+                               padding=2, groups=groups, bias=False, dilation=dilation)
         # self.bn1 = nn.Identity()
         # self.bn2 = nn.Identity()
 
@@ -49,16 +49,16 @@ class MDSR(nn.Module):
         self.shared_blocks = []
         for _ in range(80):
             self.shared_blocks.append(BasicBlock(
-                f_channels, f_channels, norm_layer=nn.Identity()))
+                f_channels, f_channels, norm_layer=nn.Identity).cuda())
 
         # sub-pixel convolution for upscaling
         self.upscale_pre = nn.Conv2d(
-            f_channels, f_channels, 3 * multiplier * multiplier, padding=1)
+            f_channels, 3 * multiplier * multiplier, 3, padding=1)
         self.upscale = nn.PixelShuffle(multiplier)
 
         # 2 3x3 resnet-relu blocks for result
-        self.out_pre_0 = BasicBlock(3, 3, norm_layer=nn.Identity(), dilation=1)
-        self.out_pre_1 = BasicBlock(3, 3, norm_layer=nn.Identity(), dilation=1)
+        self.out_pre_0 = BasicBlock(3, 3, norm_layer=nn.Identity, dilation=1)
+        self.out_pre_1 = BasicBlock(3, 3, norm_layer=nn.Identity, dilation=1)
 
     def forward(self, x):
         x = self.prior_conv_0(x)

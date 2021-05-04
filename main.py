@@ -37,9 +37,10 @@ def train(train_loader, model, criterion, optimizer):
     for (input, target) in iter(train_loader):
         optimizer.zero_grad()
         input = input.cuda()
-        predicted_label = model.forward(input).cuda()
-        # target = target.cuda()
-        loss = criterion(predicted_label, target).cuda()
+        predicted = model.forward(input).cuda()
+        target = target.cuda()
+        loss = criterion(predicted, target).cuda()
+        print(loss, end = ' '*10 + '\r')
         loss.backward()
         optimizer.step()
         total_loss += loss
@@ -76,7 +77,7 @@ def main():
 
     n_epochs = config["num_epochs"]
     print("Number of epochs: ", n_epochs)
-    model = MDSR()
+    model = MDSR().cuda()
 
     criterion = nn.L1Loss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
@@ -93,7 +94,7 @@ def main():
     dataset = DIV2K(train_HR_dataset, train_LR_dataset, transformHR, transformLR)
     train_dataset, valid_dataset = torch.utils.data.random_split(
         dataset, [int(len(dataset) * .95), int(len(dataset) * .05)])
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size = 16)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size = 1)
     val_loader = torch.utils.data.DataLoader(valid_dataset, batch_size = 1)
     #total_loss = train(train_loader, model, criterion, optimizer)
     #print("Total loss", total_loss)
