@@ -40,7 +40,7 @@ def train(train_loader, model, criterion, optimizer):
         predicted = model.forward(input).cuda()
         target = target.cuda()
         loss = criterion(predicted, target).cuda()
-        print(loss, end = ' '*10 + '\r')
+        print(loss)
         loss.backward()
         optimizer.step()
         total_loss += loss
@@ -51,8 +51,6 @@ def validate(val_loader, model, criterion):
     model.eval()
     with torch.no_grad():
         total_loss = 0
-        total = 0
-        accuracies = 0
         for (input, target) in iter(val_loader):
             # print(input.shape)
             # print(target.shape)
@@ -60,7 +58,6 @@ def validate(val_loader, model, criterion):
             target = target.cuda()
             predicted_label = model.forward(input).cuda()
             loss = criterion(predicted_label, target).cuda()
-            total += 128  # todo: change this to dataloader attribute batch_size
             total_loss += loss
         return total_loss
 
@@ -92,8 +89,8 @@ def main():
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     dataset = DIV2K(train_HR_dataset, train_LR_dataset, transformHR, transformLR)
-    train_dataset, valid_dataset = torch.utils.data.random_split(
-        dataset, [int(len(dataset) * .95), int(len(dataset) * .05)])
+    train_dataset, valid_dataset, _ = torch.utils.data.random_split(
+        dataset, [int(len(dataset) * .5), int(len(dataset) * .05), int(len(dataset) * .45)])
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size = 1)
     val_loader = torch.utils.data.DataLoader(valid_dataset, batch_size = 1)
     #total_loss = train(train_loader, model, criterion, optimizer)

@@ -64,11 +64,13 @@ class MDSR(nn.Module):
         x = self.prior_conv_0(x)
         x = self.prior_conv_1(x)
         x = self.prior_conv_2(x)
+        res_x = x
 
         for shared_block in self.shared_blocks:
             x = shared_block(x)
 
         x = self.upscale_pre(x)
+        x = x + res_x
         x = self.upscale(x)
         x = self.out_pre_0(x)
         x = self.out_pre_1(x)
